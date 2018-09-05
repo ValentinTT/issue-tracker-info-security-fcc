@@ -119,7 +119,6 @@ module.exports = function(app) {
               else res.send(doc.issues[doc.issues.length - 1]);
             });
           } else {
-            console.log("Entre")
             new Project({
                 projectName: projectName,
                 issues: [{
