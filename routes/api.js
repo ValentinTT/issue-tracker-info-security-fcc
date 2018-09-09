@@ -18,7 +18,7 @@ const mongoose = require('mongoose');
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true
 });
-//const CONNECTION_STRING = process.env.DB; //MongoClient.connect(CONNECTION_STRING, function(err, db) {});
+//const CONNECTION_STRING = process.env.DB; //MongoClient.connect(CONNECTION_STRING, (err, db) {})=> ;
 
 const Schema = mongoose.Schema;
 
@@ -68,8 +68,26 @@ const ProjectSchema = new Schema({
 
 const Project = mongoose.model('Project', ProjectSchema);
 
-module.exports = function(app) {
-
+module.exports = (app) => {
+  app.route('/:project/')
+    .get((req, res, next) => {
+      let projectName = req.params.project;
+      Project.findOne({projectName}, (err, proj) => {
+          if (err) next(err);
+          else {
+            if (proj) {
+              return res.sendFile(process.cwd() + '/views/issue.html');
+            } else {
+              new Project({projectName, issues: []})
+                .save((err, doc) => {
+                  if(err) return res.send(err);
+                  else return res.sendFile(process.cwd() + '/views/issue.html');
+              });
+            }
+          }
+    });
+  });
+  
   app.route('/api/issues/:project')
 
     .get((req, res, next) => {
@@ -98,9 +116,7 @@ module.exports = function(app) {
       let projectName = req.params.project;
       if (!req.body.issue_title || !req.body.issue_text || !req.body.created_by)
         res.send("Issue title, text and creator are required");
-      Project.findOne({
-        projectName: projectName
-      }, (err, proj) => {
+      Project.findOne({projectName}, (err, proj) => {
         if (err) next(err);
         else {
           if (proj) {
@@ -119,7 +135,6 @@ module.exports = function(app) {
               else res.send(doc.issues[doc.issues.length - 1]);
             });
           } else {
-            console.log("Entre")
             new Project({
                 projectName: projectName,
                 issues: [{
